@@ -1,0 +1,24 @@
+// Main Config file
+
+{
+    "$schema": "https://raw.githubusercontent.com/Azure/enterprise-azure-policy-as-code/main/Schemas/global-settings-schema.json",
+    "nodeName": "/Root/",
+    
+    "pacOwnerId": "<GUID value>", // Optional, but generate GUID via https://guidgenerator.com/
+    "managedIdentityLocations": {
+        "*": "westeurope" // Adjust Location of your choice.
+    },
+    "globalNotScopes": {
+        "*": [
+            "/resourceGroupPatterns/excluded-rg*"
+        ]
+    },
+    "pacEnvironments": [
+        {
+            "pacSelector": "test-environment", // Add a name to your environment if you want.
+            "cloud": "AzureCloud",
+            "tenantId": "<tenant ID>", // Mention Tenant ID of your Azure Environment.
+            "deploymentRootScope": "/providers/Microsoft.Management/managementGroups/<mg group ID>" // Mention Management Group Scope (fill in ID of Management Group).
+        }
+    ]
+}

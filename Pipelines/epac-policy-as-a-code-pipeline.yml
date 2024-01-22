@@ -1,0 +1,72 @@
+trigger: none
+
+# Added parameters, to avoid running pipeline directly. Pipeline will directly, but gives error to define environment in GUI first.
+parameters:
+- name: test-environment
+  displayName: Environment
+  type: string
+  values:
+  - test-environment
+
+variables:
+  # This pipeline is used to deploy Policies, Initiative definitions and Assignments into Azure.
+  PAC_OUTPUT_FOLDER: ./Output
+  PAC_DEFINITIONS_FOLDER: .//Definitions
+  environment-name: test-environment
+  # Use the plain text name of each service connection as a reference
+  devServiceConnection: "<service connection name>" # REPLACE THIS VALUE
+
+# Stages
+stages:
+  - stage: PolicyStage
+    displayName: "EPAC Environment Plan, Deploy and Roles"
+    variables:
+      pacEnvironmentSelector: $(environment-name)
+    jobs:
+      - deployment: allJob
+        environment: $(environment-name)
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzurePowerShell@5
+                  name: planStep
+                  displayName: Plan
+                  inputs:
+                    azureSubscription: $(devServiceConnection)
+                    pwsh: true
+                    azurePowerShellVersion: LatestVersion
+                    ScriptPath: "Scripts/Deploy/Build-DeploymentPlans.ps1"
+                    ScriptArguments:
+                      -pacEnvironmentSelector $(pacEnvironmentSelector) `
+                      -devOpsType "ado" `
+                      -InformationAction Continue
+                # Publish pipeline Artifact for Azure DevOps Service
+                - publish: "$(PAC_OUTPUT_FOLDER)/plans-$(pacEnvironmentSelector)"
+                  artifact: "plans-$(pacEnvironmentSelector)"
+                  condition: and(succeeded(), eq(variables['planStep.deployPolicyChanges'], 'yes'))
+
+                - task: AzurePowerShell@5
+                  displayName: Deploy Policies
+                  condition: and(succeeded(), eq(variables['planStep.deployPolicyChanges'], 'yes'))
+                  inputs:
+                    azureSubscription: $(devServiceConnection)
+                    pwsh: true
+                    azurePowerShellVersion: LatestVersion
+                    ScriptPath: "Scripts/Deploy/Deploy-PolicyPlan.ps1"
+                    ScriptArguments:
+                      -pacEnvironmentSelector $(pacEnvironmentSelector) `
+                      -InformationAction Continue
+
+                - task: AzurePowerShell@5
+                  displayName: Deploy Role Assignments
+                  condition: and(not(failed()), not(canceled()), eq(variables['planStep.deployRoleChanges'], 'yes'))
+                  inputs:
+                    azureSubscription: $(devServiceConnection)
+                    pwsh: true
+                    azurePowerShellVersion: LatestVersion
+                    ScriptPath: "Scripts/Deploy/Deploy-RolesPlan.ps1"
+                    ScriptArguments:
+                      -pacEnvironmentSelector $(pacEnvironmentSelector) `
+                      -InformationAction Continue

@@ -1,0 +1,22 @@
+// Example Azure Policy Assignment to assign.
+// Template used: https://azure.github.io/enterprise-azure-policy-as-code/policy-assignments/
+
+{
+    "nodeName": "/Security/",
+    "definitionEntry": {
+        "policySetId": "/providers/Microsoft.Authorization/policySetDefinitions/1f3afdf9-d0c9-4c3d-847f-89da613e70a8", // Select Initiative / PolicySet ID.
+        "displayName": "Azure Security Benchmark Mert",
+        "assignment": {
+          "append": true,
+          "name": "asb",
+          "displayName": "Azure Security Benchmark Mert",
+          "description": "Azure Security Benchmark Initiative."
+        }
+      },
+
+      "scope": {
+        "test-environment": [
+            "/providers/Microsoft.Management/managementGroups/<mg group id>" // Define which environment it needs to be deployed.
+        ]
+    }
+}

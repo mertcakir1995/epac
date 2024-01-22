@@ -1,0 +1,103 @@
+ /* 
+ Example Azure Policy Definition to assign.
+ Example Policy Definition used: https://learn.microsoft.com/en-us/azure/governance/policy/tutorials/create-custom-policy-definition
+ Example template: https://www.azurecitadel.com/policy/custom/template/ 
+ */ 
+ 
+ {
+    "name": "Test EPAC Policy Definition 2 (Mert)",
+    "properties": {
+        "displayName": "Test EPAC Policy Definition 2 (Mert)",
+        "description": "Deny Just In Time (JIT) requests with Any as the source address prefix.",
+        "mode": "All",
+        "metadata": {
+            "version": "0.1.0",
+            "category": "Just In Time",
+            "preview": true
+        },
+        "parameters": {
+            "ports": {
+                "type": "array",
+                "metadata": {
+                    "description": "The list of destination ports to check. Defaults to the standard Just In Time set.",
+                    "displayName": "Array of ports to check for."
+                },
+                "defaultValue": [
+                    "22",
+                    "3389",
+                    "5985",
+                    "5986"
+                ]
+            }
+        },
+        "policyRule": {
+            "if": {
+                "anyOf": [
+                    {
+                        "allOf": [
+                            {
+                                "field": "type",
+                                "equals": "Microsoft.Network/networkSecurityGroups/securityRules"
+                            },
+                            {
+                                "field": "Microsoft.Network/networkSecurityGroups/securityRules/direction",
+                                "equals": "Inbound"
+                            },
+                            {
+                                "field": "Microsoft.Network/networkSecurityGroups/securityRules/access",
+                                "equals": "Allow"
+                            },
+                            {
+                                "field": "Microsoft.Network/networkSecurityGroups/securityRules/sourceAddressPrefix",
+                                "equals": "*"
+                            },
+                            {
+                                "field": "Microsoft.Network/networkSecurityGroups/securityRules/destinationPortRange",
+                                "in": "[parameters('ports')]"
+                            }
+                        ]
+                    },
+                    {
+                        "allOf": [
+                            {
+                                "field": "type",
+                                "equals": "Microsoft.Network/networkSecurityGroups"
+                            },
+                            {
+                                "count": {
+                                    "field": "Microsoft.Network/networkSecurityGroups/securityRules[*]",
+                                    "where": {
+                                        "allOf": [
+                                            {
+                                                "field": "Microsoft.Network/networkSecurityGroups/securityRules[*].direction",
+                                                "equals": "Inbound"
+                                            },
+                                            {
+                                                "field": "Microsoft.Network/networkSecurityGroups/securityRules[*].access",
+                                                "equals": "Allow"
+                                            },
+                                            {
+                                                "field": "Microsoft.Network/networkSecurityGroups/securityRules[*].sourceAddressPrefix",
+                                                "equals": "*"
+                                            },
+                                            {
+                                                "field": "Microsoft.Network/networkSecurityGroups/securityRules[*].destinationPortRange",
+                                                "in": "[parameters('ports')]"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "greater": 0
+                            }
+                        ]
+                    }
+                ]
+            },
+            "then": {
+                "effect": "deny"
+            }
+        }
+    }
+}
+
+      

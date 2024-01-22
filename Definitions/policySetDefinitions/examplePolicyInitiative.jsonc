@@ -1,0 +1,79 @@
+{
+    /* Example Azure Policy Initiative to assign.
+    Example Policy Initiative used: https://learn.microsoft.com/en-us/azure/governance/policy/concepts/initiative-definition-structure 
+    EPAC Structure Link: https://azure.github.io/enterprise-azure-policy-as-code/policy-set-definitions/ 
+    
+    In this example, I've referred to one Policy Definition that is created in /policyDefinitions/examplePolicyDefinition.jsonc and one built-in policy in Azure.
+    */
+
+    "name": "Test EPAC Policy Initiative (Mert)",
+    "properties": {
+        "displayName": "Test EPAC Policy Initiative (Mert)",
+        "policyType": "Custom",
+        "description": "Description Test EPAC Policy Initiative (Mert)",
+        "metadata": {
+            "version": "1.0.0",
+            "category": "Tags"
+        },
+        
+        // Define policyDefinition Group.
+        "policyDefinitionGroups": [
+            {
+                "name": "Group Test EPAC Policy Initiative (Mert)"
+            }
+        ],
+
+        // Define all parameters that are being used of all policy definitions that you're mentioning (don't make duplicate parameter names).
+        "parameters": {
+            "effectType": {
+                "type": "string",
+                "defaultValue": "Deny",
+                "allowedValues": [
+                    "Deny",
+                    "Disabled"
+                ],
+                "metadata": {
+                    "displayName": "Effect",
+                    "description": "Enable or disable the execution of the policy"
+                },
+            },
+            "effect": {
+                "type": "string",
+                "metadata": {
+                    "displayName": "Effect",
+                    "description": "Enable or disable the execution of the policy"
+                },
+                "allowedValues": [
+                    "Manual",
+                    "Disabled"
+                ],
+                "defaultValue": "Manual"
+            }
+        },
+
+        // Policy Definitions to refer to create an Initiative.
+        "policyDefinitions": [
+            {
+                "policyDefinitionReferenceId": "/providers/Microsoft.Management/managementGroups/<mg group id>/providers/Microsoft.Authorization/policyDefinitions/Test EPAC Policy Definition (Mert)", // Change management ID name
+                "policyDefinitionName": "Test EPAC Policy Definition (Mert)", // Use this if referring to custom policy.
+                "parameters": {
+                    "effectType": { // Mention Parameter name as defined here above @ parameters.
+                        "value": "[parameters('effectType')]"
+                    }
+                }
+            },
+            {
+                "policyDefinitionReferenceId": "/providers/Microsoft.Authorization/policyDefinitions/fd81a1b3-2d7a-107c-507e-29b87d040c19",
+                "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/fd81a1b3-2d7a-107c-507e-29b87d040c19", // Use this for built-in policy.
+                "parameters": {
+                    "effect": {
+                        "value": "[parameters('effect')]"
+                    }
+                },
+                "groupNames": [
+                    "Group Test EPAC Policy Initiative (Mert)" // Mention Group name for this.
+                ]
+            }
+        ]
+    }
+}
